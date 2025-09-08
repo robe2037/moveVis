@@ -696,7 +696,7 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
 .add_m_attributes <- function(m, path_colours){
   if(!is.character(path_colours)){
     path_colours <- .standard_colours(mt_n_tracks(m))
-    if(is.null(m$colour)) m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
+    if(!"colour" %in% colnames(m)) m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
   } else{
     m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
   }
