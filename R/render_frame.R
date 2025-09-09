@@ -64,6 +64,7 @@ render_frame <- function(frames, i = length(frames)){
           add_coord = FALSE),
         m_names = frames$m$name,
         m_colour = frames$m$colour,
+        m_labels = frames$m$colour_labels,
         path_end = frames$aesthetics$path_end,
         path_join = frames$aesthetics$path_join,
         path_mitre = frames$aesthetics$path_mitre,

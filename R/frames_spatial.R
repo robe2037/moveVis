@@ -192,8 +192,8 @@
 
 frames_spatial <- function(
     m, r = NULL, r_type = "gradient", fade_raster = FALSE, crop_raster = TRUE, map_service = "osm", map_type = "streets", map_res = 1, map_token = NULL, map_dir = NULL,
-    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NA, path_alpha = 1, path_fade = FALSE,
-    path_legend = TRUE, path_legend_title = "Names", tail_length = 19, tail_size = 1, tail_colour = "white", trace_show = FALSE, trace_size = tail_size, trace_colour = "white", cross_dateline = FALSE, ..., verbose = TRUE){
+    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NA, colour_tracks_by = move2::mt_track_id_column(m), path_alpha = 1, path_fade = FALSE,
+    path_legend = TRUE, path_legend_title = colour_tracks_by, tail_length = 19, tail_size = 1, tail_colour = "white", trace_show = FALSE, trace_size = tail_size, trace_colour = "white", cross_dateline = FALSE, ..., verbose = TRUE){
   
   if(inherits(verbose, "logical")) options(moveVis.verbose = verbose)
   extras <- list(...)
@@ -286,7 +286,7 @@ frames_spatial <- function(
   # if(is.null(m$colour)){
   #   m$colour <- repl_vals(as.character(mt_track_id(m)), unique(as.character(mt_track_id(m))), path_colours[1:mt_n_tracks(m)])
   # }
-  m <- .add_m_attributes(m, path_colours = path_colours)
+  m <- .add_m_attributes(m, path_colours = path_colours, colour_tracks_by = colour_tracks_by)
   
   # print stats
   .stats(n.frames = max(m$frame))
@@ -344,33 +344,37 @@ frames_spatial <- function(
     m = m,
     r = r,
     crs = crs,
-    aesthetics = c(list(
-      equidistant = equidistant,
-      path_size = path_size,
-      path_end = path_end,
-      path_join = path_join,
-      path_alpha = path_alpha,
-      path_mitre = path_mitre,
-      path_arrow = path_arrow, 
-      path_legend = path_legend,
-      path_legend_title = path_legend_title,
-      tail_length = tail_length,
-      tail_size = tail_size,
-      tail_colour = tail_colour,
-      trace_show = trace_show,
-      trace_size = trace_size,
-      trace_colour = trace_colour,
-      path_fade = path_fade,
-      gg.ext = gg.ext,
-      map_service = map_service,
-      map_type = map_type,
-      r_type = r_type,
-      fade_raster = fade_raster,
-      n_r = n_r),
+    aesthetics = c(
+      list(
+        equidistant = equidistant,
+        colour_tracks_by = colour_tracks_by,
+        path_size = path_size,
+        path_end = path_end,
+        path_join = path_join,
+        path_alpha = path_alpha,
+        path_mitre = path_mitre,
+        path_arrow = path_arrow, 
+        path_legend = path_legend,
+        path_legend_title = path_legend_title,
+        tail_length = tail_length,
+        tail_size = tail_size,
+        tail_colour = tail_colour,
+        trace_show = trace_show,
+        trace_size = trace_size,
+        trace_colour = trace_colour,
+        path_fade = path_fade,
+        gg.ext = gg.ext,
+        map_service = map_service,
+        map_type = map_type,
+        r_type = r_type,
+        fade_raster = fade_raster,
+        n_r = n_r
+      ),
       maxpixels = if(!is.null(extras$maxpixels)) extras$maxpixels else 500000,
       alpha = if(!is.null(extras$alpha)) extras$alpha else 1,
       maxColorValue = if(!is.null(extras$maxColorValue)) extras$maxColorValue else NA,
-      interpolate = if(!is.null(extras$interpolate)) extras$interpolate else FALSE),
+      interpolate = if(!is.null(extras$interpolate)) extras$interpolate else FALSE
+    ),
     additions = NULL
   )
   attr(frames, "class") <- c("moveVis", "frames_spatial")

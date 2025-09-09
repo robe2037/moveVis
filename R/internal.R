@@ -531,7 +531,7 @@ repl_vals <- function(data, x, y){
 #' @importFrom ggnewscale new_scale_colour
 #' @importFrom rlang .data
 #' @noRd
-gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre, path_arrow, path_alpha, path_legend, path_legend_title, path_size, equidistant, tail_length){
+gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, path_mitre, path_arrow, path_alpha, path_legend, path_legend_title, path_size, equidistant, tail_length){
   
   # lines: sements
   x_lines <- do.call(rbind, lapply(unique(m_names), function(.name){
@@ -550,24 +550,31 @@ gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre,
     } else NULL
   }))
   
+  if (is.null(m_labels)) {
+    m_labels <- m_names
+  }
+  
   # lines: full
-  x_lines_legend <- do.call(rbind, lapply(unique(m_names), function(.name){
+  colour_map <- unique(data.frame(name = m_names, colour = m_colour, label = m_labels))
+  
+  x_lines_legend <- do.call(rbind, lapply(colour_map$label, function(.name){
     coords <- st_coordinates(x)
     st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
   }))
   x_lines_legend$name <- factor(unique(m_names), levels = unique(m_names))
-  x_lines_legend$colour <- unique(m_colour)
+  x_lines_legend$label <- colour_map$label
+  x_lines_legend$colour <- colour_map$colour
   
   # scale plot to ext and set na.rm to TRUE to avoid warnings
   y$layers[[1]]$geom_params$na.rm <- T
   
   # plot
   p <- y + geom_sf(data = x_lines,
-    aes(colour = .data$tail_colour), linewidth = x_lines$tail_size,
-    lineend = path_end, linejoin = path_join, linemitre = path_mitre, arrow = path_arrow,
-    alpha = path_alpha, na.rm = T
+                   aes(colour = .data$tail_colour), linewidth = x_lines$tail_size,
+                   lineend = path_end, linejoin = path_join, linemitre = path_mitre, arrow = path_arrow,
+                   alpha = path_alpha, na.rm = T
   ) + scale_colour_identity()
-   
+  
   # # points
   # ggplot(x) + geom_sf(aes(colour = tail_colour, size = tail_size)) + 
   #   scale_colour_identity() + scale_size(guide = NULL)
@@ -575,11 +582,13 @@ gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre,
   # add legend?
   if(isTRUE(path_legend)){
     p <- quiet(p + new_scale_colour() +
-      geom_sf(data = x_lines_legend, aes(colour = .data$name, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
-      scale_linetype(guide = "none") +
-      scale_colour_manual(
-        values = setNames(x_lines_legend$colour, x_lines_legend$name),
-        name = path_legend_title) + guides(color = guide_legend(order = 1)))
+                 geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
+                 scale_linetype(guide = "none") +
+                 scale_colour_manual(
+                   values = setNames(x_lines_legend$colour, x_lines_legend$label),
+                   name = path_legend_title 
+                 ) +
+                 guides(color = guide_legend(order = 1)))
   }    
   
   # theme
@@ -693,11 +702,37 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
 #' add attributes needed by moveVis functions to m
 #' @importFrom move2 mt_time mt_track_id
 #' @noRd
-.add_m_attributes <- function(m, path_colours){
-  if(!is.character(path_colours)){
-    path_colours <- .standard_colours(mt_n_tracks(m))
-    if(!"colour" %in% colnames(m)) m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
-  } else{
+.add_m_attributes <- function(m, path_colours, colour_tracks_by) {
+  if (!is.character(path_colours)) {
+    track_data <- move2::mt_track_data(m)
+    track_id_col <- move2::mt_track_id_column(m)
+    
+    # Attach track attribute categories to colors
+    colour_categories <- unique(track_data[[colour_tracks_by]])
+    path_colours <- .standard_colours(length(unique(colour_categories)))
+    
+    attr_colour_map <- setNames(
+      data.frame(colour_categories, path_colours), 
+      c(colour_tracks_by, "colour")
+    )
+    
+    # Attach colors to individual track records based on track attribute
+    # Use `union()` because it is possible that the attribute to color by
+    # is actually track ID column itself.
+    track_colour_map <- merge(
+      track_data[union(track_id_col, colour_tracks_by)],
+      attr_colour_map, 
+      by = colour_tracks_by
+    )
+    
+    # Add appropriate colour and category labels to m for use when rendering frames 
+    if (!"colour" %in% colnames(m)) {
+      i <- match(move2::mt_track_id(m), track_colour_map[[track_id_col]])
+      
+      m$colour <- track_colour_map$colour[i]
+      m$colour_labels <- track_colour_map[[colour_tracks_by]][i]
+    }
+  } else {
     m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
   }
   
