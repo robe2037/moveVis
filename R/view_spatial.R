@@ -57,6 +57,9 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
   ## preprocess movement data
   m <- .add_m_attributes(m, path_colours = path_colours)
   
+  # Prevents incorrect color mapping in mapview
+  m[[mt_track_id_column(m)]] <- droplevels(m[[mt_track_id_column(m)]])
+  
   ## render as mapview object
   if(render_as == "mapview"){
     if(length(grep("mapview", rownames(utils::installed.packages()))) == 0) out("'mapview' has to be installed to use this function. Use install.packages('mapview').", type = 3)
@@ -75,7 +78,7 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
     if(length(grep("leaflet", rownames(utils::installed.packages()))) == 0) out("'leaflet' has to be installed to use this function. Use install.packages('leaflet').", type = 3)
     
     # compose
-    m.split <- split(m, mt_track_id(m))
+    m.split <- split(m, mt_track_id(m), drop = TRUE)
     map <- leaflet::addTiles(map = leaflet::leaflet(m))
     for(i in 1:length(m.split)) map <- leaflet::addCircleMarkers(
       map = map, lng = st_coordinates(m.split[[i]])[,1], 
