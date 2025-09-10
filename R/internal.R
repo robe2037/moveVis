@@ -592,7 +592,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   }    
   
   # theme
-  p <- p + theme_bw() + x$coord[[1]] + x$scalex[[1]] + x$scaley[[1]]
+  p <- p + theme_bw() + x$coord[[1]] + x[["scalex"]][[1]] + x[["scaley"]][[1]]
   if(isTRUE(equidistant)) p <- p + theme(aspect.ratio = 1)
   return(p)
 }
@@ -755,12 +755,10 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
   )
   
   # Add appropriate colour and category labels to m for use when rendering frames 
-  # if (!"colour" %in% colnames(m)) {
   i <- match(m[[colour_tracks_by]], colour_map[[colour_tracks_by]])
   
   m$colour <- colour_map[[colour_col_name]][i]
   m$colour_labels <- colour_map[[colour_tracks_by]][i]
-  # }
   
   # add some info to m
   m$time_chr <- as.character(mt_time(m))

@@ -322,7 +322,7 @@ frames_spatial <- function(
     xlim = c(gg.ext$xmin, gg.ext$xmax), ylim = c(gg.ext$ymin, gg.ext$ymax),
     expand = F, crs = crs, datum = crs_graticule, clip = "on")
   )
-  m$scaley <- m$scalex <- NULL # relict from when moveVis handled cross_dateline by itself insteaf of relying
+  m[["scaley"]] <- m[["scalex"]] <- NULL # relict from when moveVis handled cross_dateline by itself insteaf of relying
   # on sf::st_shift_longitude() for it. 
   # m$scalex <- list(ggplot2::scale_x_continuous(labels = .x_labels)) # only works with caartesian coord on the render end
   # m$scaley <- list(ggplot2::scale_y_continuous(labels = .y_labels))
