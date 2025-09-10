@@ -719,11 +719,15 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
   
   n_colour_cats <- length(unique(colour_categories))
   
-  # Default colours. Otherwise uses the values provided to `path_colours`
-  if (!is.character(path_colours)) {
-    path_colours <- .standard_colours(n_colour_cats)
+  # Default colour palette. Otherwise get colours from provided `path_colours`
+  if (!is.character(path_colours) && !is.function(path_colours)) {
+    path_colours <- function(x) .standard_colours(x)
+  }
+  
+  if (is.function(path_colours)) {
+    path_colours <- path_colours(n_colour_cats)
   } else {
-    # Recycle `path_colours` if only length 1
+    # Recycle `path_colours` if length 1
     if (length(path_colours) == 1) {
       path_colours <- rep(path_colours, n_colour_cats)
     }
