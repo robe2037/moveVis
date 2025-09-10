@@ -561,7 +561,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
     coords <- st_coordinates(x)
     st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
   }))
-  x_lines_legend$name <- factor(unique(m_names), levels = unique(m_names))
+  x_lines_legend$name <- colour_map$name
   x_lines_legend$label <- colour_map$label
   x_lines_legend$colour <- colour_map$colour
   
@@ -703,38 +703,64 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
 #' @importFrom move2 mt_time mt_track_id
 #' @noRd
 .add_m_attributes <- function(m, path_colours, colour_tracks_by) {
-  if (!is.character(path_colours)) {
-    track_data <- move2::mt_track_data(m)
-    track_id_col <- move2::mt_track_id_column(m)
-    
-    # Attach track attribute categories to colors
-    colour_categories <- unique(track_data[[colour_tracks_by]])
-    path_colours <- .standard_colours(length(unique(colour_categories)))
-    
-    attr_colour_map <- setNames(
-      data.frame(colour_categories, path_colours), 
-      c(colour_tracks_by, "colour")
+  # If colouring by a track attribute, expand it into the event data frame
+  if (colour_tracks_by %in% colnames(move2::mt_track_data(m))) {
+    m <- move2::mt_as_event_attribute(m, !!as.name(colour_tracks_by))
+  } else if (!colour_tracks_by %in% colnames(m)) {
+    # If not colouring by a track attribute, the column must be in event data
+    out(
+      paste0("Column '", colour_tracks_by, "' not found in 'm'"), 
+      type = 3
     )
-    
-    # Attach colors to individual track records based on track attribute
-    # Use `union()` because it is possible that the attribute to color by
-    # is actually track ID column itself.
-    track_colour_map <- merge(
-      track_data[union(track_id_col, colour_tracks_by)],
-      attr_colour_map, 
-      by = colour_tracks_by
-    )
-    
-    # Add appropriate colour and category labels to m for use when rendering frames 
-    if (!"colour" %in% colnames(m)) {
-      i <- match(move2::mt_track_id(m), track_colour_map[[track_id_col]])
-      
-      m$colour <- track_colour_map$colour[i]
-      m$colour_labels <- track_colour_map[[colour_tracks_by]][i]
-    }
-  } else {
-    m$colour <- .mapvalues(as.character(mt_track_id(m)), unique(mt_track_id(m)), path_colours)
   }
+  
+  # Build mapping from levels of attribute being colored by to color codes
+  colour_categories <- unique(m[[colour_tracks_by]])
+  
+  n_colour_cats <- length(unique(colour_categories))
+  
+  # Default colours. Otherwise uses the values provided to `path_colours`
+  if (!is.character(path_colours)) {
+    path_colours <- .standard_colours(n_colour_cats)
+  } else {
+    # Recycle `path_colours` if only length 1
+    if (length(path_colours) == 1) {
+      path_colours <- rep(path_colours, n_colour_cats)
+    }
+    
+    if (length(path_colours) != n_colour_cats) {
+      out(
+        paste0(
+          "Number of 'path_colours' (", length(path_colours), ") does not equal",
+          " the number of levels in '", colour_tracks_by, "' (", 
+          n_colour_cats, ")"
+        ), 
+        type = 3
+      )
+    }
+  }
+  
+  # Avoid duplicate names if `colour_tracks_by = "colour"`
+  colour_col_name <- make.unique(c(colour_tracks_by, "colour"))[2]
+  
+  attr_colour_map <- setNames(
+    data.frame(colour_categories, path_colours), 
+    c(colour_tracks_by, colour_col_name)
+  )
+  
+  colour_map <- merge(
+    m[union(move2::mt_track_id_column(m), colour_tracks_by)],
+    attr_colour_map, 
+    by = colour_tracks_by
+  )
+  
+  # Add appropriate colour and category labels to m for use when rendering frames 
+  # if (!"colour" %in% colnames(m)) {
+  i <- match(m[[colour_tracks_by]], colour_map[[colour_tracks_by]])
+  
+  m$colour <- colour_map[[colour_col_name]][i]
+  m$colour_labels <- colour_map[[colour_tracks_by]][i]
+  # }
   
   # add some info to m
   m$time_chr <- as.character(mt_time(m))
