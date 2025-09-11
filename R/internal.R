@@ -579,17 +579,33 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   # ggplot(x) + geom_sf(aes(colour = tail_colour, size = tail_size)) + 
   #   scale_colour_identity() + scale_size(guide = NULL)
   
+  scale_type <- .scale_type(class(x_lines_legend$label))
+  
   # add legend?
   if(isTRUE(path_legend)){
-    p <- quiet(p + new_scale_colour() +
-                 geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
-                 scale_linetype(guide = "none") +
-                 scale_colour_manual(
-                   values = setNames(x_lines_legend$colour, x_lines_legend$label),
-                   name = path_legend_title 
-                 ) +
-                 guides(color = guide_legend(order = 1)))
-  }    
+    if (scale_type == "qualitative") {
+      p <- quiet(p + new_scale_colour() +
+                   geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
+                   scale_linetype(guide = "none") +
+                   scale_colour_manual(
+                     values = setNames(x_lines_legend$colour, x_lines_legend$label),
+                     name = path_legend_title 
+                   ) +
+                   guides(color = guide_legend(order = 1)))
+    } else {
+      cont_colours <- unique(colour_map[, c("colour", "label")])
+      cont_colours <- cont_colours[order(cont_colours$label), ]
+      
+      p <- quiet(
+        p + 
+          new_scale_colour() +
+          geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) +
+          scale_linetype(guide = "none") +
+          ggplot2::scale_colour_gradientn(colours = cont_colours$colour, limits = range(cont_colours$label), name = path_legend_title) +
+          guides(color = ggplot2::guide_colourbar(order = 1))
+      )
+    }
+  }
   
   # theme
   p <- p + theme_bw() + x$coord[[1]] + x[["scalex"]][[1]] + x[["scaley"]][[1]]
@@ -714,55 +730,59 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
     )
   }
   
-  # Build mapping from levels of attribute being colored by to color codes
-  colour_categories <- unique(m[[colour_tracks_by]])
+  # Identify what type of color scale we're working with.
+  scale_type <- .scale_type(class(m[[colour_tracks_by]]))
   
-  n_colour_cats <- length(unique(colour_categories))
-  
-  # Default colour palette. Otherwise get colours from provided `path_colours`
-  if (!is.character(path_colours) && !is.function(path_colours)) {
-    path_colours <- function(x) .standard_colours(x)
-  }
-  
-  if (is.function(path_colours)) {
-    path_colours <- path_colours(n_colour_cats)
-  } else {
-    # Recycle `path_colours` if length 1
-    if (length(path_colours) == 1) {
-      path_colours <- rep(path_colours, n_colour_cats)
+  if (scale_type == "continuous") {
+    # Default colour palette. Otherwise get colours from provided `path_colours`
+    if (!is.character(path_colours) && !is.function(path_colours)) {
+      path_colours <- function(x) grDevices::hcl.colors(x)
     }
     
-    if (length(path_colours) != n_colour_cats) {
-      out(
-        paste0(
-          "Number of 'path_colours' (", length(path_colours), ") does not equal",
-          " the number of levels in '", colour_tracks_by, "' (", 
-          n_colour_cats, ")"
-        ), 
-        type = 3
-      )
+    if (is.function(path_colours)) {
+      path_colours <- path_colours(256)
     }
+    
+    color_scale <- scales::col_numeric(path_colours, domain = range(m[[colour_paths_by]]))
+  } else {
+    # Build mapping from levels of attribute being colored by to color codes
+    colour_categories <- unique(m[[colour_tracks_by]])
+    
+    n_colour_cats <- length(unique(colour_categories))
+    
+    if (!is.character(path_colours) && !is.function(path_colours)) {
+      path_colours <- function(x) .standard_colours(x)
+    }
+    
+    if (is.function(path_colours)) {
+      path_colours <- path_colours(n_colour_cats)
+    } else {
+      # Recycle `path_colours` if length 1
+      if (length(path_colours) == 1) {
+        path_colours <- rep(path_colours, n_colour_cats)
+      }
+      
+      if (length(path_colours) != n_colour_cats) {
+        out(
+          paste0(
+            "Number of 'path_colours' (", length(path_colours), ") does not equal",
+            " the number of levels in '", colour_tracks_by, "' (", 
+            n_colour_cats, ")"
+          ), 
+          type = 3
+        )
+      }
+    }
+    
+    if (is.factor(colour_categories)) {
+      colour_categories <- droplevels(colour_categories)
+    }
+    
+    color_scale <- scales::col_factor(path_colours, domain = colour_categories)
   }
   
-  # Avoid duplicate names if `colour_tracks_by = "colour"`
-  colour_col_name <- make.unique(c(colour_tracks_by, "colour"))[2]
-  
-  attr_colour_map <- setNames(
-    data.frame(colour_categories, path_colours), 
-    c(colour_tracks_by, colour_col_name)
-  )
-  
-  colour_map <- merge(
-    m[union(move2::mt_track_id_column(m), colour_tracks_by)],
-    attr_colour_map, 
-    by = colour_tracks_by
-  )
-  
-  # Add appropriate colour and category labels to m for use when rendering frames 
-  i <- match(m[[colour_tracks_by]], colour_map[[colour_tracks_by]])
-  
-  m$colour <- colour_map[[colour_col_name]][i]
-  m$colour_labels <- colour_map[[colour_tracks_by]][i]
+  m$colour <- color_scale(m[[colour_paths_by]])
+  m$colour_labels <- m[[colour_paths_by]]
   
   # add some info to m
   m$time_chr <- as.character(mt_time(m))
@@ -772,6 +792,23 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
   m <- m[order(m$frame),]
   m$name <- mt_track_id(m)
   return(m)
+}
+
+.scale_type <- function(x) {
+  switch(
+    x[1],
+    numeric   = "continuous",
+    integer   = "continuous",
+    Date      = "continuous",
+    POSIXct   = "continuous",
+    POSIXlt   = "continuous",
+    difftime  = "continuous",
+    factor    = "qualitative",
+    ordered   = "qualitative",
+    character = "qualitative",
+    logical   = "qualitative",
+    "qualitative" 
+  )
 }
 
 #' extract crs params
