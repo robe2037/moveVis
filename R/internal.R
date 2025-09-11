@@ -555,7 +555,8 @@ gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre,
     coords <- st_coordinates(x)
     st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
   }))
-  x_lines_legend$name <- unique(m_names)
+  x_lines_legend$name <- factor(unique(m_names), levels = unique(m_names))
+  x_lines_legend$colour <- unique(m_colour)
   
   # scale plot to ext and set na.rm to TRUE to avoid warnings
   y$layers[[1]]$geom_params$na.rm <- T
@@ -577,7 +578,7 @@ gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre,
       geom_sf(data = x_lines_legend, aes(colour = .data$name, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
       scale_linetype(guide = "none") +
       scale_colour_manual(
-        values = setNames(unique(m_colour), unique(m_names)),
+        values = setNames(x_lines_legend$colour, x_lines_legend$name),
         name = path_legend_title) + guides(color = guide_legend(order = 1)))
   }    
   
