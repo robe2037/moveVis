@@ -718,20 +718,20 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
 #' add attributes needed by moveVis functions to m
 #' @importFrom move2 mt_time mt_track_id
 #' @noRd
-.add_m_attributes <- function(m, path_colours, colour_tracks_by) {
+.add_m_attributes <- function(m, path_colours, colour_paths_by) {
   # If colouring by a track attribute, expand it into the event data frame
-  if (colour_tracks_by %in% colnames(move2::mt_track_data(m))) {
-    m <- move2::mt_as_event_attribute(m, !!as.name(colour_tracks_by))
-  } else if (!colour_tracks_by %in% colnames(m)) {
+  if (colour_paths_by %in% colnames(move2::mt_track_data(m))) {
+    m <- move2::mt_as_event_attribute(m, !!as.name(colour_paths_by))
+  } else if (!colour_paths_by %in% colnames(m)) {
     # If not colouring by a track attribute, the column must be in event data
     out(
-      paste0("Column '", colour_tracks_by, "' not found in 'm'"), 
+      paste0("Column '", colour_paths_by, "' not found in 'm'"), 
       type = 3
     )
   }
   
   # Identify what type of color scale we're working with.
-  scale_type <- .scale_type(class(m[[colour_tracks_by]]))
+  scale_type <- .scale_type(class(m[[colour_paths_by]]))
   
   if (scale_type == "continuous") {
     # Default colour palette. Otherwise get colours from provided `path_colours`
@@ -746,7 +746,7 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
     color_scale <- scales::col_numeric(path_colours, domain = range(m[[colour_paths_by]]))
   } else {
     # Build mapping from levels of attribute being colored by to color codes
-    colour_categories <- unique(m[[colour_tracks_by]])
+    colour_categories <- unique(m[[colour_paths_by]])
     
     n_colour_cats <- length(unique(colour_categories))
     
@@ -766,7 +766,7 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
         out(
           paste0(
             "Number of 'path_colours' (", length(path_colours), ") does not equal",
-            " the number of levels in '", colour_tracks_by, "' (", 
+            " the number of levels in '", colour_paths_by, "' (", 
             n_colour_cats, ")"
           ), 
           type = 3
@@ -780,7 +780,7 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
     
     color_scale <- scales::col_factor(path_colours, domain = colour_categories)
   }
-  
+
   m$colour <- color_scale(m[[colour_paths_by]])
   m$colour_labels <- m[[colour_paths_by]]
   

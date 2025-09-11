@@ -192,8 +192,8 @@
 
 frames_spatial <- function(
     m, r = NULL, r_type = "gradient", fade_raster = FALSE, crop_raster = TRUE, map_service = "osm", map_type = "streets", map_res = 1, map_token = NULL, map_dir = NULL,
-    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NA, colour_tracks_by = move2::mt_track_id_column(m), path_alpha = 1, path_fade = FALSE,
-    path_legend = TRUE, path_legend_title = colour_tracks_by, tail_length = 19, tail_size = 1, tail_colour = "white", trace_show = FALSE, trace_size = tail_size, trace_colour = "white", cross_dateline = FALSE, ..., verbose = TRUE){
+    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NA, colour_paths_by = move2::mt_track_id_column(m), path_alpha = 1, path_fade = FALSE,
+    path_legend = TRUE, path_legend_title = colour_paths_by, tail_length = 19, tail_size = 1, tail_colour = "white", trace_show = FALSE, trace_size = tail_size, trace_colour = "white", cross_dateline = FALSE, ..., verbose = TRUE){
   
   if(inherits(verbose, "logical")) options(moveVis.verbose = verbose)
   extras <- list(...)
@@ -285,7 +285,7 @@ frames_spatial <- function(
   # if(is.null(m$colour)){
   #   m$colour <- repl_vals(as.character(mt_track_id(m)), unique(as.character(mt_track_id(m))), path_colours[1:mt_n_tracks(m)])
   # }
-  m <- .add_m_attributes(m, path_colours = path_colours, colour_tracks_by = colour_tracks_by)
+  m <- .add_m_attributes(m, path_colours = path_colours, colour_paths_by = colour_paths_by)
   
   # print stats
   .stats(n.frames = max(m$frame))
@@ -346,7 +346,7 @@ frames_spatial <- function(
     aesthetics = c(
       list(
         equidistant = equidistant,
-        colour_tracks_by = colour_tracks_by,
+        colour_paths_by = colour_paths_by,
         path_size = path_size,
         path_end = path_end,
         path_join = path_join,
