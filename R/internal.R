@@ -624,15 +624,24 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
     coord_cartesian(xlim = c(0, max(y$frame, na.rm = T)), ylim = c(min(val_seq, na.rm = T), max(val_seq, na.rm = T))) +
     theme_bw() + theme(aspect.ratio = 1) + scale_y_continuous(expand = c(0,0), breaks = val_seq) + scale_x_continuous(expand = c(0,0))
   
+  if (is.null(y$colour_labels)) {
+    y$colour_labels <- y$name
+  }
+  
   ## add legend
   if(isTRUE(path_legend)){
-    colour_pos <- sapply(as.character(unique(y$name)), function(x) match(x, y$name)[1] )
+    colour_pos <- sapply(as.character(unique(y$colour_labels)), function(x) match(x, y$colour_labels)[1])
     
     l.df <- cbind.data.frame(frame = x[1,]$frame, value = x[1,]$value, name = names(colour_pos),
                              colour = as.character(y$colour[colour_pos]), stringsAsFactors = F)
-    l.df$name <- factor(l.df$name, levels = l.df$name)
+    
+    # Ensure legend mapping is in factor order if input data are factor
+    if (is.factor(y$colour_labels)) {
+      l.df$name <- factor(l.df$name, levels = levels(y$colour_labels))
+    }
+    
     l.df <- rbind(l.df, l.df)
-    p <- p + geom_path(data = l.df, aes(x = .data$frame, y = .data$value, colour = .data$name), linewidth = path_size, na.rm = TRUE) + scale_colour_manual(values = as.character(l.df$colour), name = path_legend_title) #linetype = NA)
+    p <- p + geom_path(data = l.df, aes(x = .data$frame, y = .data$value, colour = .data$name), linewidth = path_size, na.rm = TRUE) + scale_colour_manual(values = setNames(as.character(l.df$colour), as.character(l.df$name)), name = path_legend_title) #linetype = NA)
   }
   return(p)
   
@@ -654,11 +663,22 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   p <- p + coord_cartesian(xlim = c(min(val_seq, na.rm = T), max(val_seq, na.rm = T)), ylim = c(min(y$count, na.rm = T), max(y$count, na.rm = T))) +
     theme_bw() + theme(aspect.ratio = 1) + scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0), breaks = val_seq)
   
+  if (is.null(y$colour_labels)) {
+    y$colour_labels <- y$name
+  }
+  
   ## add legend
   if(isTRUE(path_legend)){
-    l.df <- cbind.data.frame(value = x[1,]$value, count = x[1,]$count, name = unique(y$name),
-                             colour = as.character(y$colour[sapply(as.character(unique(y$name)), function(x) match(x, y$name)[1] )]), stringsAsFactors = F)
-    l.df$name <- factor(l.df$name, levels = l.df$name)
+    colour_pos <- sapply(as.character(unique(y$colour_labels)), function(x) match(x, y$colour_labels)[1])
+    
+    l.df <- cbind.data.frame(value = x[1,]$value, count = x[1,]$count, name = names(colour_pos),
+                             colour = as.character(y$colour[colour_pos]), stringsAsFactors = F)
+    
+    # Ensure legend mapping is in factor order if input data are factor
+    if (is.factor(y$colour_labels)) {
+      l.df$name <- factor(l.df$name, levels = levels(y$colour_labels))
+    }
+    
     l.df <- rbind(l.df, l.df)
     p <- p + geom_path(data = l.df, aes(x = .data$value, y = .data$count, colour = .data$name), linewidth = path_size, na.rm = TRUE) + scale_colour_manual(values = setNames(as.character(l.df$colour), as.character(l.df$name)), name = path_legend_title) #linetype = NA
   }

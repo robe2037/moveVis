@@ -115,3 +115,202 @@ test_that("frames_graph maps correct colours to tracks (hist)", {
   expect_equal(pal[["T342g"]],  "#65A7C9")
   expect_equal(pal[["T932u"]],  "#461A6B")
 })
+
+test_that("frames_graph can color by track attributes", {
+  m.aligned <- move2::mutate_track_data(m.aligned, var = c("A", "A", "B"))
+  
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var"
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  sc <- built$plot$scales$get_scales("colour")
+  lims <- sc$get_limits()
+  cols <- sc$map(lims)
+  
+  expect_equal(lims, c("A", "B"))
+  expect_equal(cols, .standard_colours(2))
+})
+
+test_that("frames_graph can color by event attributes", {
+  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var"
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  sc <- built$plot$scales$get_scales("colour")
+  lims <- sc$get_limits()
+  cols <- sc$map(lims)
+  
+  expect_equal(lims, unique(m.aligned[["var"]]))
+  expect_equal(cols, .standard_colours(2))
+  
+  expect_error(
+    frames_graph(m.aligned, r_grad, verbose = FALSE, colour_paths_by = "foo"),
+    "Column 'foo' not found"
+  )
+})
+
+test_that("User can provide `path_colours` when colouring by attribute", {
+  m.aligned <- move2::mutate_track_data(
+    m.aligned, 
+    var = factor(c("A", "A", "B"), levels = c("B", "A"))
+  )
+  
+  # User specified color vector
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var",
+    graph_type = "hist",
+    path_colours = c("#F2A08F", "#65A7C9")
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  sc <- built$plot$scales$get_scales("colour")
+  lims <- sc$get_limits()
+  cols <- sc$map(lims)
+  
+  expect_equal(lims, c("B", "A"))
+  expect_equal(cols, c("#F2A08F", "#65A7C9"))
+  
+  # Bad arguments
+  expect_error(
+    frames_graph(
+      m.aligned, 
+      r_grad,
+      colour_paths_by = "var",
+      verbose = FALSE,
+      path_colours = c("#F2A08F", "#65A7C9", "#461A6B")
+    ),
+    paste0(
+      "Number of 'path_colours' \\(3\\) does not equal the number of levels",
+      " in 'var' \\(2\\)"
+    )
+  )
+})
+
+test_that("path_colours accepts palette function", {
+  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  
+  pal <- function(x) grDevices::hcl.colors(x, palette = "viridis")
+  
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    path_colours = pal
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  sc <- built$plot$scales$get_scales("colour")
+  lims <- sc$get_limits()
+  cols <- sc$map(lims)
+  
+  expect_equal(lims, levels(move2::mt_track_id(m.aligned)))
+  expect_equal(cols, pal(3))
+  
+  # Palette adjusts to number of levels in coloring variable
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var",
+    path_colours = pal
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  sc <- built$plot$scales$get_scales("colour")
+  lims <- sc$get_limits()
+  cols <- sc$map(lims)
+  
+  expect_equal(lims, unique(m.aligned[["var"]]))
+  expect_equal(cols, pal(length(unique(m.aligned[["var"]]))))
+})
+
+test_that("Coloring by attributes orders correctly for factor vs. character", {
+  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  
+  fr1 <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var"
+  )
+  
+  built1 <- ggplot2::ggplot_build(fr1[[50]])
+  sc1 <- built1$plot$scales$get_scales("colour")
+  lims1 <- sc1$get_limits()
+  cols1 <- sc1$map(lims1)
+  
+  m.aligned[["var"]] <- factor(m.aligned[["var"]], levels = c("B", "A"))
+  
+  fr2 <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1, 
+    colour_paths_by = "var"
+  )
+  
+  built2 <- ggplot2::ggplot_build(fr2[[50]])
+  sc2 <- built2$plot$scales$get_scales("colour")
+  lims2 <- sc2$get_limits()
+  cols2 <- sc2$map(lims2)
+  
+  expect_equal(lims1, rev(lims2))
+  expect_equal(cols1, cols2)
+})
+
+test_that("Error when coloring by continuous attribute", {
+  m.aligned[["var"]] <- 1:nrow(m.aligned)
+  
+  expect_error(
+    frames_graph(
+      m.aligned,
+      r_grad,
+      verbose = FALSE,
+      colour_paths_by = "var"
+    ),
+    "Cannot color by continuous variables"
+  )
+})
+
+test_that("Legend title uses attribute variable", {
+  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  
+  fr <- frames_graph(
+    m.aligned, 
+    r_grad,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "var"
+  )
+  
+  built <- ggplot2::ggplot_build(fr[[50]])
+  gt    <- ggplot2::ggplot_gtable(built)
+  
+  # This isn't super robust, but difficult to fully automate checking
+  # the ggplot2 internals. In the future a snapshot test would likely be
+  # more effective.
+  expect_equal(
+    gt$grobs[[15]]$grobs[[1]]$grobs[[7]]$children[[1]]$label,
+    "var"
+  )
+})
+

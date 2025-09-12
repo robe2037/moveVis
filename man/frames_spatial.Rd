@@ -26,10 +26,11 @@ frames_spatial(
   path_mitre = 10,
   path_arrow = NULL,
   path_colours = NA,
+  colour_tracks_by = move2::mt_track_id_column(m),
   path_alpha = 1,
   path_fade = FALSE,
   path_legend = TRUE,
-  path_legend_title = "Names",
+  path_legend_title = colour_tracks_by,
   tail_length = 19,
   tail_size = 1,
   tail_colour = "white",
@@ -90,7 +91,7 @@ so that baesmap tiles that had been already downloaded by moveVis do not have to
 
 \item{path_fade}{logical, whether paths should be faded towards the last frame or not. Useful, if \code{trace_show = TRUE} and you want to hold the last frame using \code{end_pause} in \code{\link{animate_frames}}.}
 
-\item{path_legend}{logical, whether to add a path legend from \code{m} or not. Legend tracks and colours will be ordered by the tracks' temporal apperances, not by their order in \code{m}.}
+\item{path_legend}{logical, whether to add a path legend from \code{m} or not. When coloring tracks by a qualitative variable, legend entries will be ordered by the levels of that variable (if a factor) or alphabetically (if a character).}
 
 \item{path_legend_title}{character, path legend title. Default is \code{"Names"}.}
 
