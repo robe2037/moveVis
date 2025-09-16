@@ -740,9 +740,12 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
 #' @noRd
 .add_m_attributes <- function(m, path_colours, colour_paths_by) {
   # If colouring by a track attribute, expand it into the event data frame
-  if (colour_paths_by %in% colnames(move2::mt_track_data(m))) {
+  is_track_attr <- colour_paths_by %in% colnames(move2::mt_track_data(m))
+  is_event_attr <- colour_paths_by %in% colnames(m)
+  
+  if (is_track_attr && !is_event_attr) {
     m <- move2::mt_as_event_attribute(m, !!as.name(colour_paths_by))
-  } else if (!colour_paths_by %in% colnames(m)) {
+  } else if (!is_event_attr) {
     # If not colouring by a track attribute, the column must be in event data
     out(
       paste0("Column '", colour_paths_by, "' not found in 'm'"), 
