@@ -10,8 +10,9 @@ view_spatial(
   time_labels = TRUE,
   stroke = TRUE,
   path_colours = NA,
+  colour_paths_by = move2::mt_track_id_column(m),
   path_legend = TRUE,
-  path_legend_title = "Names",
+  path_legend_title = colour_paths_by,
   verbose = TRUE
 )
 }
@@ -24,11 +25,13 @@ view_spatial(
 
 \item{stroke}{logical, whether to draw stroke around circles.}
 
-\item{path_colours}{character, a vector of colours. Must be of same length as number of individual tracks in \code{m} and refers to the order of tracks in \code{m}. If undefined (\code{NA}) and \code{m} contains a column named \code{colour}, colours provided within \code{m} are used (see details). Othwersie, colours are selected from a standard rainbow palette per individual track.}
+\item{path_colours}{character or palette function to use to colour the tracks in `m`. If a character vector, must be a vector of the same length as the number of levels in the attribute being used to colour the tracks (see argument `colour_paths_by`). If a function, must accept an integer and return a vector of colours of that length. By default, colours are selected from a standard rainbow palette per individual track.}
 
-\item{path_legend}{logical, whether to add a path legend from \code{m} or not. When coloring tracks by a qualitative variable, legend entries will be ordered by the levels of that variable (if a factor) or alphabetically (if a character).}
+\item{colour_paths_by}{character indicating the name of an attribute column in `m` to use to define path colours. This attribute can be either an event or track-level attribute. By default, colours by track ID.}
 
-\item{path_legend_title}{character, path legend title. Default is \code{"Names"}.}
+\item{path_legend}{logical, whether to add a path legend from \code{m} or not. When colouring tracks by a qualitative attribute, legend entries will be ordered by the levels of that attribute (if a factor) or alphabetically (if a character).}
+
+\item{path_legend_title}{character, path legend title. Defaults to the column name specified in `colour_paths_by`.}
 
 \item{verbose}{logical, if \code{TRUE}, messages and progress information are displayed on the console (default).}
 }
