@@ -37,8 +37,8 @@
 #' @importFrom sf st_coordinates
 #' @export
 
-view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = TRUE, path_colours = NA, path_legend = TRUE,
-                         path_legend_title = "Names", verbose = TRUE){
+view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = TRUE, path_colours = NA, colour_paths_by = move2::mt_track_id_column(m), path_legend = TRUE,
+                         path_legend_title = colour_paths_by, verbose = TRUE){
   
   ## dependency check
   if(is.character(render_as)){
@@ -55,7 +55,7 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
   if(!is.character(path_legend_title)) out("Argument 'path_legend_title' must be of type 'character'.", type = 3)
   
   ## preprocess movement data
-  m <- .add_m_attributes(m, path_colours = path_colours)
+  m <- .add_m_attributes(m, path_colours = path_colours, colour_paths_by = colour_paths_by)
   
   ## render as mapview object
   if(render_as == "mapview"){
@@ -63,7 +63,7 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
     
     # compose
     map <- mapview::mapview(
-      m, map.types = "OpenStreetMap", xcol = "x", ycol = "y", zcol = mt_track_id_column(m), legend = path_legend,
+      m, map.types = "OpenStreetMap", xcol = "x", ycol = "y", zcol = colour_paths_by, legend = path_legend,
       crs = st_crs(m)$proj4string, grid = F, layer.name = path_legend_title,
       col.regions = unique(m$colour),
       label = if(isTRUE(time_labels)) mt_time(m) else NULL, stroke = stroke
