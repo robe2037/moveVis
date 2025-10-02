@@ -601,7 +601,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
           new_scale_colour() +
           geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) +
           scale_linetype(guide = "none") +
-          ggplot2::scale_colour_gradientn(colours = cont_colours$colour, limits = range(cont_colours$label), name = path_legend_title) +
+          ggplot2::scale_colour_gradientn(colours = cont_colours$colour, limits = range(as.numeric(cont_colours$label)), name = path_legend_title) +
           guides(color = ggplot2::guide_colourbar(order = 1))
       )
     }
