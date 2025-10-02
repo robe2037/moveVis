@@ -822,6 +822,7 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
     x[1],
     numeric   = "continuous",
     integer   = "continuous",
+    integer64 = "continuous",
     Date      = "continuous",
     POSIXct   = "continuous",
     POSIXlt   = "continuous",
