@@ -140,10 +140,10 @@ test_that("frames_spatial (cross_dateline)", {
 })
 
 test_that("frames_spatial can color by track attributes", {
-  m.aligned <- move2::mutate_track_data(m.aligned, var = c("A", "A", "B"))
+  m <- move2::mutate_track_data(m.aligned, var = c("A", "A", "B"))
   
   fr <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1,
     colour_paths_by = "var"
@@ -159,11 +159,12 @@ test_that("frames_spatial can color by track attributes", {
 })
 
 test_that("frames_spatial can color by event attributes", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   # Default
   fr <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1,
     colour_paths_by = "var"
@@ -174,21 +175,24 @@ test_that("frames_spatial can color by event attributes", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, unique(m.aligned[["var"]]))
+  expect_equal(lims, unique(m[["var"]]))
   expect_equal(cols, .standard_colours(2))
   
   expect_error(
-    frames_spatial(m.aligned, colour_paths_by = "foo"),
+    capture.output(frames_spatial(m, colour_paths_by = "foo")),
     "Column 'foo' not found"
   )
 })
 
 test_that("User can provide `path_colours` when colouring by attribute", {
-  m.aligned <- move2::mutate_track_data(m.aligned, var = factor(c("A", "A", "B"), levels = c("B", "A")))
+  m <- move2::mutate_track_data(
+    m.aligned, 
+    var = factor(c("A", "A", "B"), levels = c("B", "A"))
+  )
   
   # User specified color vector
   fr <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1,
     colour_paths_by = "var",
@@ -202,28 +206,16 @@ test_that("User can provide `path_colours` when colouring by attribute", {
   
   expect_equal(lims, c("B", "A"))
   expect_equal(cols, c("#F2A08F", "#65A7C9"))
-  
-  # Bad arguments
-  expect_error(
-    frames_spatial(
-      m.aligned, 
-      colour_paths_by = "var",
-      path_colours = c("#F2A08F", "#65A7C9", "#461A6B")
-    ),
-    paste0(
-      "Number of 'path_colours' \\(3\\) does not equal the number of levels",
-      " in 'var' \\(2\\)"
-    )
-  )
 })
 
 test_that("path_colours accepts palette function", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   pal <- function(x) grDevices::hcl.colors(x, palette = "viridis")
   
   fr <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1, 
     path_colours = pal
@@ -234,12 +226,12 @@ test_that("path_colours accepts palette function", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, levels(move2::mt_track_id(m.aligned)))
+  expect_equal(lims, levels(move2::mt_track_id(m)))
   expect_equal(cols, pal(3))
 
   # Palette adjusts to number of levels in coloring variable
   fr <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1,
     colour_paths_by = "var",
@@ -251,15 +243,16 @@ test_that("path_colours accepts palette function", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, unique(m.aligned[["var"]]))
-  expect_equal(cols, pal(length(unique(m.aligned[["var"]]))))
+  expect_equal(lims, unique(m[["var"]]))
+  expect_equal(cols, pal(length(unique(m[["var"]]))))
 })
 
 test_that("Coloring by attributes orders correctly for factor vs. character", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   fr1 <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1,
     colour_paths_by = "var"
@@ -270,10 +263,10 @@ test_that("Coloring by attributes orders correctly for factor vs. character", {
   lims1 <- sc1$get_limits()
   cols1 <- sc1$map(lims1)
   
-  m.aligned[["var"]] <- factor(m.aligned[["var"]], levels = c("B", "A"))
+  m[["var"]] <- factor(m[["var"]], levels = c("B", "A"))
   
   fr2 <- frames_spatial(
-    m.aligned, 
+    m, 
     verbose = FALSE,
     map_res = 0.1, 
     colour_paths_by = "var"

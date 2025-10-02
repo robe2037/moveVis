@@ -74,7 +74,7 @@
 #' 
 #' @export
 
-frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_raster = TRUE, return_data = FALSE, graph_type = "flow", path_size = 1, path_colours = NA, colour_paths_by = move2::mt_track_id_column(m), path_legend = TRUE, path_legend_title = colour_paths_by, 
+frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_raster = TRUE, return_data = FALSE, graph_type = "flow", path_size = 1, path_colours = NULL, colour_paths_by = move2::mt_track_id_column(m), path_legend = TRUE, path_legend_title = colour_paths_by, 
                          val_min = NULL, val_max = NULL, val_by = 0.1, ..., verbose = T){
 
   ## check input arguments
@@ -137,12 +137,20 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
   if(r_type == "discrete" & fade_raster == T) out("Argument 'fade_raster' is TRUE, while argument 'r_type' is set to 'discrete'. Interpolating discrete values will destroy discrete classes!", type = 2)
   if(r_type == "discrete" & !val_by%%1==0) out("Argument 'val_by' is fractional, while argument 'r_type' is set to 'discrete'. You may want to set 'val_by' to 1 or another integer for discrete classes.", type = 2)
   
-  if (.scale_type(class(m[[colour_paths_by]])) == "continuous") {
+  if (.scale_type(m[[colour_paths_by]]) == "continuous") {
     out("Cannot color by continuous variables in `frames_graph()`", type = 3)
   }
   
+  m <- .expand_track_attr(m, var = colour_paths_by)
+  
+  pal <- .build_pal(m[[colour_paths_by]], path_colours)
+  scale <- .build_scale(m[[colour_paths_by]], pal)
+  
+  m$colour <- scale(m[[colour_paths_by]])
+  m$colour_labels <- m[[colour_paths_by]]
+  
   ## create data.frame from m with frame time and colour
-  m <- .add_m_attributes(m, path_colours = path_colours, colour_paths_by = colour_paths_by)
+  m <- .add_m_attributes(m)
   .stats(max(m$frame))
   
   ## create raster list
@@ -224,7 +232,8 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
       path_legend_title = path_legend_title,
       val_seq = val_seq,
       r_type = r_type),
-    additions = NULL
+    additions = NULL,
+    palette = pal
   )
   attr(frames, "class") <- c("moveVis", "frames_graph")
   

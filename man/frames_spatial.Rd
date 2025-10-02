@@ -25,7 +25,7 @@ frames_spatial(
   path_join = "round",
   path_mitre = 10,
   path_arrow = NULL,
-  path_colours = NA,
+  path_colours = NULL,
   colour_paths_by = move2::mt_track_id_column(m),
   path_alpha = 1,
   path_fade = FALSE,

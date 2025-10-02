@@ -13,7 +13,7 @@ frames_graph(
   return_data = FALSE,
   graph_type = "flow",
   path_size = 1,
-  path_colours = NA,
+  path_colours = NULL,
   colour_paths_by = move2::mt_track_id_column(m),
   path_legend = TRUE,
   path_legend_title = colour_paths_by,

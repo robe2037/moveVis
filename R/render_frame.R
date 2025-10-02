@@ -74,7 +74,8 @@ render_frame <- function(frames, i = length(frames)){
         path_legend_title = frames$aesthetics$path_legend_title,
         path_size = frames$aesthetics$path_size,
         equidistant = frames$aesthetics$equidistant,
-        tail_length = frames$aesthetics$tail_length
+        tail_length = frames$aesthetics$tail_length,
+        palette = frames$palette
       )
     }
     if(inherits(frames, "frames_graph")){
@@ -85,7 +86,8 @@ render_frame <- function(frames, i = length(frames)){
           path_legend = frames$aesthetics$path_legend,
           path_legend_title = frames$aesthetics$path_legend_title,
           path_size = frames$aesthetics$path_size,
-          val_seq = frames$aesthetics$val_seq
+          val_seq = frames$aesthetics$val_seq,
+          palette = frames$palette
         )
       }
       if(frames$graph_type == "hist"){
@@ -96,7 +98,8 @@ render_frame <- function(frames, i = length(frames)){
           path_legend_title = frames$aesthetics$path_legend_title,
           path_size = frames$aesthetics$path_size,
           val_seq = frames$aesthetics$val_seq,
-          r_type = frames$aesthetics$r_type
+          r_type = frames$aesthetics$r_type,
+          palette = frames$palette
         )
       }
     }

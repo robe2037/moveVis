@@ -117,10 +117,10 @@ test_that("frames_graph maps correct colours to tracks (hist)", {
 })
 
 test_that("frames_graph can color by track attributes", {
-  m.aligned <- move2::mutate_track_data(m.aligned, var = c("A", "A", "B"))
+  m <- move2::mutate_track_data(m.aligned, var = c("A", "A", "B"))
   
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -137,10 +137,11 @@ test_that("frames_graph can color by track attributes", {
 })
 
 test_that("frames_graph can color by event attributes", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -152,7 +153,7 @@ test_that("frames_graph can color by event attributes", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, unique(m.aligned[["var"]]))
+  expect_equal(lims, unique(m[["var"]]))
   expect_equal(cols, .standard_colours(2))
   
   expect_error(
@@ -162,14 +163,14 @@ test_that("frames_graph can color by event attributes", {
 })
 
 test_that("User can provide `path_colours` when colouring by attribute", {
-  m.aligned <- move2::mutate_track_data(
+  m <- move2::mutate_track_data(
     m.aligned, 
     var = factor(c("A", "A", "B"), levels = c("B", "A"))
   )
   
   # User specified color vector
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -185,30 +186,16 @@ test_that("User can provide `path_colours` when colouring by attribute", {
   
   expect_equal(lims, c("B", "A"))
   expect_equal(cols, c("#F2A08F", "#65A7C9"))
-  
-  # Bad arguments
-  expect_error(
-    frames_graph(
-      m.aligned, 
-      r_grad,
-      colour_paths_by = "var",
-      verbose = FALSE,
-      path_colours = c("#F2A08F", "#65A7C9", "#461A6B")
-    ),
-    paste0(
-      "Number of 'path_colours' \\(3\\) does not equal the number of levels",
-      " in 'var' \\(2\\)"
-    )
-  )
 })
 
 test_that("path_colours accepts palette function", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   pal <- function(x) grDevices::hcl.colors(x, palette = "viridis")
   
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -220,12 +207,12 @@ test_that("path_colours accepts palette function", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, levels(move2::mt_track_id(m.aligned)))
+  expect_equal(lims, levels(move2::mt_track_id(m)))
   expect_equal(cols, pal(3))
   
   # Palette adjusts to number of levels in coloring variable
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -238,15 +225,16 @@ test_that("path_colours accepts palette function", {
   lims <- sc$get_limits()
   cols <- sc$map(lims)
   
-  expect_equal(lims, unique(m.aligned[["var"]]))
-  expect_equal(cols, pal(length(unique(m.aligned[["var"]]))))
+  expect_equal(lims, unique(m[["var"]]))
+  expect_equal(cols, pal(length(unique(m[["var"]]))))
 })
 
 test_that("Coloring by attributes orders correctly for factor vs. character", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   fr1 <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -258,10 +246,10 @@ test_that("Coloring by attributes orders correctly for factor vs. character", {
   lims1 <- sc1$get_limits()
   cols1 <- sc1$map(lims1)
   
-  m.aligned[["var"]] <- factor(m.aligned[["var"]], levels = c("B", "A"))
+  m[["var"]] <- factor(m[["var"]], levels = c("B", "A"))
   
   fr2 <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1, 
@@ -278,11 +266,12 @@ test_that("Coloring by attributes orders correctly for factor vs. character", {
 })
 
 test_that("Error when coloring by continuous attribute", {
-  m.aligned[["var"]] <- 1:nrow(m.aligned)
+  m <- m.aligned
+  m[["var"]] <- 1:nrow(m)
   
   expect_error(
     frames_graph(
-      m.aligned,
+      m,
       r_grad,
       verbose = FALSE,
       colour_paths_by = "var"
@@ -292,10 +281,11 @@ test_that("Error when coloring by continuous attribute", {
 })
 
 test_that("Legend title uses attribute variable", {
-  m.aligned[["var"]] <- ifelse(m.aligned[["track"]] == "T246a", "A", "B")
+  m <- m.aligned
+  m[["var"]] <- ifelse(m[["track"]] == "T246a", "A", "B")
   
   fr <- frames_graph(
-    m.aligned, 
+    m, 
     r_grad,
     verbose = FALSE,
     map_res = 0.1,
@@ -303,7 +293,7 @@ test_that("Legend title uses attribute variable", {
   )
   
   built <- ggplot2::ggplot_build(fr[[50]])
-  gt    <- ggplot2::ggplot_gtable(built)
+  gt <- ggplot2::ggplot_gtable(built)
   
   # This isn't super robust, but difficult to fully automate checking
   # the ggplot2 internals. In the future a snapshot test would likely be

@@ -9,7 +9,7 @@ view_spatial(
   render_as = "mapview",
   time_labels = TRUE,
   stroke = TRUE,
-  path_colours = NA,
+  path_colours = NULL,
   colour_paths_by = move2::mt_track_id_column(m),
   path_legend = TRUE,
   path_legend_title = colour_paths_by,
@@ -17,7 +17,7 @@ view_spatial(
 )
 }
 \arguments{
-\item{m}{\code{move2} object. Can contain a column named \code{colour} to control path colours (see \code{details}).}
+\item{m}{\code{move2} object.}
 
 \item{render_as}{character, either \code{'mapview'} to return a \code{mapview} map or \code{'leaflet'} to return a \code{leaflet} map.}
 
@@ -40,10 +40,6 @@ An interactive \code{mapview} or \code{leaflet} map.
 }
 \description{
 \code{view_spatial} is a simple wrapper that displays movement tracks on an interactive \code{mapview} or \code{leaflet} map.
-}
-\details{
-If argument \code{path_colours} is not defined (set to \code{NA}), path colours can be defined by adding a character column named \code{colour} to \code{m}, containing a colour code or name per row (e.g. \code{"red"}. This way, for example, column \code{colour} for all rows belonging to individual A can be set to \code{"green"}, while column \code{colour} for all rows belonging to individual B can be set to \code{"red"}.
-Colours could also be arranged to change through time or by behavioral segments, geographic locations, age, environmental or health parameters etc. If a column name \code{colour} in \code{m} is missing, colours will be selected automatically. Call \code{colours()} to see all available colours in R.
 }
 \examples{
 \dontrun{

@@ -199,7 +199,7 @@
 
 frames_spatial <- function(
     m, r = NULL, r_type = "gradient", fade_raster = FALSE, crop_raster = TRUE, map_service = "osm", map_type = "streets", map_res = 1, map_token = NULL, map_dir = NULL,
-    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NA, colour_paths_by = move2::mt_track_id_column(m), path_alpha = 1, path_fade = FALSE,
+    margin_factor = 1.1, equidistant = NULL, ext = NULL, crs = if(is.null(r)) st_crs(3857) else st_crs(terra::crs(r)), crs_graticule = st_crs(4326), path_size = 3, path_end = "round", path_join = "round", path_mitre = 10, path_arrow = NULL, path_colours = NULL, colour_paths_by = move2::mt_track_id_column(m), path_alpha = 1, path_fade = FALSE,
     path_legend = TRUE, path_legend_title = colour_paths_by, tail_length = 19, tail_size = 1, tail_colour = "white", trace_show = FALSE, trace_size = tail_size, trace_colour = "white", cross_dateline = FALSE, ..., verbose = TRUE){
   
   if(inherits(verbose, "logical")) options(moveVis.verbose = verbose)
@@ -292,7 +292,16 @@ frames_spatial <- function(
   # if(is.null(m$colour)){
   #   m$colour <- repl_vals(as.character(mt_track_id(m)), unique(as.character(mt_track_id(m))), path_colours[1:mt_n_tracks(m)])
   # }
-  m <- .add_m_attributes(m, path_colours = path_colours, colour_paths_by = colour_paths_by)
+  
+  m <- .expand_track_attr(m, var = colour_paths_by)
+  
+  pal <- .build_pal(m[[colour_paths_by]], path_colours)
+  scale <- .build_scale(m[[colour_paths_by]], pal)
+  
+  m$colour <- scale(m[[colour_paths_by]]) # Can be removed?
+  m$colour_labels <- m[[colour_paths_by]]
+  
+  m <- .add_m_attributes(m)
   
   # print stats
   .stats(n.frames = max(m$frame))
@@ -380,7 +389,8 @@ frames_spatial <- function(
       maxColorValue = if(!is.null(extras$maxColorValue)) extras$maxColorValue else NA,
       interpolate = if(!is.null(extras$interpolate)) extras$interpolate else FALSE
     ),
-    additions = NULL
+    additions = NULL,
+    palette = pal
   )
   attr(frames, "class") <- c("moveVis", "frames_spatial")
   
