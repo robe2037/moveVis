@@ -295,12 +295,12 @@ test_that("Legend title uses attribute variable", {
   built <- ggplot2::ggplot_build(fr[[50]])
   gt <- ggplot2::ggplot_gtable(built)
   
+  grobs <- gt$grobs[[15]]$grobs[[1]]$grobs
+  i <- which(sapply(grobs, function(x) grepl("guide.title.titleGrob", x$name)))
+  
   # This isn't super robust, but difficult to fully automate checking
   # the ggplot2 internals. In the future a snapshot test would likely be
   # more effective.
-  expect_equal(
-    gt$grobs[[15]]$grobs[[1]]$grobs[[7]]$children[[1]]$label,
-    "var"
-  )
+  expect_equal(grobs[[i]]$children[[1]]$label, "var")
 })
 
