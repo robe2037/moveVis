@@ -51,3 +51,12 @@ test_that("Fill most proximate value when `fill_na_vals = TRUE`", {
     expect_equal(a1$x, m1$x[idx])
   }
 })
+
+test_that("align_move() handles empty factor levels", {
+  m_filt <- move2::filter_track_data(m, .track_id = c("T246a", "T932u"))
+  
+  expect_silent(x <- align_move(m_filt, verbose = FALSE))
+  expect_is(x, "move2")
+  expect_length(na.omit(unique(unlist(move2::mt_time_lags(x, units = "secs")))), 1)
+  expect_equal(nrow(x), 300)
+})

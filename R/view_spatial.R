@@ -63,6 +63,13 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
   ## preprocess movement data
   m <- .add_m_attributes(m)
   
+  # Prevents incorrect color mapping in mapview
+  track_id_col <- mt_track_id_column(m)
+  
+  if (is.factor(m[[track_id_col]])) {
+    m[[track_id_col]] <- droplevels(m[[track_id_col]])
+  }
+  
   ## render as mapview object
   if(render_as == "mapview"){
     if(length(grep("mapview", rownames(utils::installed.packages()))) == 0) out("'mapview' has to be installed to use this function. Use install.packages('mapview').", type = 3)
