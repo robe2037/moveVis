@@ -856,6 +856,17 @@ which.minpos <- function(x) min(which(min(x[x > 0]) == x))
   )
 }
 
+.drop_units_safe <- function(x) {
+  x <- tryCatch(
+    units::drop_units(x),
+    error = function(cnd) {
+      x
+    }
+  )
+  
+  x
+}
+
 #' extract crs params
 #' @importFrom utils capture.output
 #' @noRd

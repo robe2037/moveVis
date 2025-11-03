@@ -330,6 +330,20 @@ test_that("Can color by continuous attribute", {
     c("grey50", "#316BB1", "#6F9ECD", "#AACBE3", "#DFEEF7", "grey50")
   )
   expect_equal(sc$guide, "colourbar")
+  
+  # Can handle units:
+  m.aligned[["row"]] <- units::set_units(m.aligned[["row"]], "m/s")
+  
+  fr2 <- frames_spatial(
+    m.aligned,
+    verbose = FALSE,
+    map_res = 0.1,
+    colour_paths_by = "row",
+    path_colours = function(x) grDevices::hcl.colors(x, "Blues")
+  )
+  
+  expect_equal(fr$aesthetics, fr2$aesthetics)
+  expect_silent(fr2[[1]])
 })
 
 test_that("Legend title uses attribute variable", {
