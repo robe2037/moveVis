@@ -50,6 +50,8 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
   if(!is.logical(time_labels)) out("Argument 'time_labels' must be of type 'logical'.", type = 3)
   if(!is.character(path_legend_title)) out("Argument 'path_legend_title' must be of type 'character'.", type = 3)
   
+  # Units do not always cooperate with color scales...
+  m[[colour_paths_by]] <- .drop_units_safe(m[[colour_paths_by]])
   m <- .expand_track_attr(m, var = colour_paths_by)
   
   pal <- .build_pal(m[[colour_paths_by]], path_colours)

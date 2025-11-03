@@ -293,6 +293,8 @@ frames_spatial <- function(
   #   m$colour <- repl_vals(as.character(mt_track_id(m)), unique(as.character(mt_track_id(m))), path_colours[1:mt_n_tracks(m)])
   # }
   
+  # Units do not always cooperate with color scales...
+  m[[colour_paths_by]] <- .drop_units_safe(m[[colour_paths_by]])
   m <- .expand_track_attr(m, var = colour_paths_by)
   
   pal <- .build_pal(m[[colour_paths_by]], path_colours)
