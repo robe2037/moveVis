@@ -152,10 +152,10 @@ align_move <- function(m, res = "minimum", start_end_time = NULL, fill_na_values
   
   # assemble sf object
   m_aligned <- lapply(1:length(m_tracks), function(i) st_sf(
-    interpolated = c(rep(FALSE, nrow(m_tracks[[i]])), rep(TRUE, length(m_aligned[[i]]))),
+    interpolated = TRUE,
     track = names(m_tracks)[i],
-    timestamp = c(mt_time(m_tracks[[i]]), times_target[[i]]),
-    geometry = c(st_geometry(m_tracks[[i]]), m_aligned[[i]])
+    timestamp = times_target[[i]],
+    geometry = m_aligned[[i]]
   ))
   m_aligned <- do.call(rbind, m_aligned)
   colnames(m_aligned) <- c("interpolated", mt_track_id_column(m), mt_time_column(m), attr(m, "sf_column"))
