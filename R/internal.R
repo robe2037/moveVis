@@ -554,16 +554,6 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
     m_labels <- m_names
   }
   
-  # lines: full
-  colour_map <- unique(data.frame(name = m_names, colour = m_colour, label = m_labels))
-  
-  x_lines_legend <- do.call(rbind, lapply(colour_map$label, function(.name){
-    coords <- st_coordinates(x)
-    st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
-  }))
-  x_lines_legend$name <- colour_map$name
-  x_lines_legend$label <- colour_map$label
-  
   # scale plot to ext and set na.rm to TRUE to avoid warnings
   y$layers[[1]]$geom_params$na.rm <- T
   
@@ -578,29 +568,44 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   # ggplot(x) + geom_sf(aes(colour = tail_colour, size = tail_size)) + 
   #   scale_colour_identity() + scale_size(guide = NULL)
   
-  scale_type <- .scale_type(x_lines_legend$label)
-  
   # add legend?
   if(isTRUE(path_legend)){
+    scale_type <- .scale_type(m_labels)
+    
     if (scale_type == "qualitative") {
-      p <- quiet(
-        p + 
-          new_scale_colour() +
-          geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) + 
-          scale_linetype(guide = "none") +
-          scale_colour_manual(
-            values = palette(length(unique(x_lines_legend$label))),
-            name = path_legend_title 
-          ) +
-          guides(color = guide_legend(order = 1))
-      )
-    } else {
+      colour_map <- unique(data.frame(name = m_names, colour = m_colour, label = m_labels))
+      
+      x_lines_legend <- do.call(rbind, lapply(colour_map$label, function(.name){
+        coords <- st_coordinates(x)
+        st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
+      }))
+      x_lines_legend$name <- colour_map$name
+      x_lines_legend$label <- colour_map$label
+
       p <- quiet(
         p + 
           new_scale_colour() +
           geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) +
           scale_linetype(guide = "none") +
-          ggplot2::scale_colour_gradientn(colours = palette(256), limits = range(as.numeric(x_lines_legend$label)), name = path_legend_title) +
+          scale_colour_manual(
+            values = palette(length(unique(m_labels))),
+            name = path_legend_title 
+          ) +
+          guides(color = guide_legend(order = 1))
+      )
+    } else {
+      # Continuous legend doesn't need predefined factor levels in the input
+      # data. To speed up rendering, we use an empty data layer and build the
+      # gradient scale manually based on the range of values in the input labels
+      p <- quiet(
+        p + 
+          new_scale_colour() +
+          ggplot2::geom_point(
+            data = data.frame(x = numeric(0), y = numeric(0), label = numeric(0)), 
+            aes(x = x, y = y, colour = .data$label)
+          ) +
+          scale_linetype(guide = "none") +
+          ggplot2::scale_colour_gradientn(colours = palette(256), limits = range(as.numeric(m_labels)), name = path_legend_title) +
           guides(color = ggplot2::guide_colourbar(order = 1))
       )
     }
