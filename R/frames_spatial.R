@@ -386,7 +386,7 @@ frames_spatial <- function(
         fade_raster = fade_raster,
         n_r = n_r
       ),
-      maxpixels = if(!is.null(extras$maxpixels)) extras$maxpixels else 500000,
+      maxpixels = if(!is.null(extras$maxpixels)) extras$maxpixels else terra::ncell(r),
       alpha = if(!is.null(extras$alpha)) extras$alpha else 1,
       maxColorValue = if(!is.null(extras$maxColorValue)) extras$maxColorValue else NA,
       interpolate = if(!is.null(extras$interpolate)) extras$interpolate else FALSE
