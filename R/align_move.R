@@ -184,29 +184,18 @@ align_move <- function(m, res = "minimum", start_end_time = NULL, fill_na_values
   if (isTRUE(fill_na_values) && length(names_attr) > 0) {
     m_aligned_filled <- split(m_aligned, mt_track_id(m_aligned))
     
-    # All interpolated attributes should have NA for same records for a given
-    # track. We only need one attribute vector to identify which records
-    # are NA. Use the first attribute:
-    attr1 <- names_attr[[1]]
-    
     # Split by track to avoid interpolating values across tracks
     for (i in seq(1, length(m_aligned_filled))) {
-      # Identify closest timestamps for each missing record
-      idx <- nearest_time_idx(
-        m_aligned_filled[[i]][[attr1]], 
-        mt_time(m_aligned_filled[[i]])
-      )
-      
-      # Select most proximate available records and reassign for each attribute
-      invisible(
-        lapply(
-          names_attr, 
-          function(att) {
-            x <- m_aligned_filled[[i]][[att]]
-            m_aligned_filled[[i]][[att]][is.na(x)] <<- x[!is.na(x)][idx]
-          }
+      for (att in names_attr) {
+        # Identify closest timestamps for each missing record
+        idx <- nearest_time_idx(
+          m_aligned_filled[[i]][[att]],
+          mt_time(m_aligned_filled[[i]])
         )
-      )
+        
+        x <- m_aligned_filled[[i]][[att]]
+        m_aligned_filled[[i]][[att]][is.na(x)] <- x[!is.na(x)][idx]
+      }
     }
     
     m_aligned <- do.call(rbind, m_aligned_filled)
@@ -226,7 +215,7 @@ align_move <- function(m, res = "minimum", start_end_time = NULL, fill_na_values
 nearest_time_idx <- function(x, time) {
   stopifnot(length(x) == length(time))
   non_na <- !is.na(x)
-  if (all(non_na)) return(x)
+  if (all(non_na) || all(!non_na)) return(x)
   
   # numeric representation of time for distance comparisons
   time <- as.numeric(time)
