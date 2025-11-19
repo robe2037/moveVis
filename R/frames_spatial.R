@@ -300,8 +300,17 @@ frames_spatial <- function(
   pal <- .build_pal(m[[colour_paths_by]], path_colours)
   scale <- .build_scale(m[[colour_paths_by]], pal)
   
-  m$colour <- scale(m[[colour_paths_by]]) # Can be removed?
-  m$colour_labels <- m[[colour_paths_by]]
+  m$colour <- scale(m[[colour_paths_by]])
+  
+  if (.scale_type(m[[colour_paths_by]]) == "qualitative") {
+    legend_labels <- unique(m[[colour_paths_by]])
+    legend_colours <- pal(length(legend_labels))
+  } else {
+    # we don't actually use this except to keep a record that the scale is 
+    # continuous, would be nice to find another way.
+    legend_labels <- unique(m[[colour_paths_by]])
+    legend_colours <- pal(256)
+  }
   
   m <- .add_m_attributes(m)
   
@@ -355,7 +364,7 @@ frames_spatial <- function(
   # } else{
   #   time(r) <- list(rep(floor(length(sort(unique(mt_time(m))))/2), nlyr(r_list[[1]])))
   # }
-  
+
   # create frames object
   frames <- list(
     m = m,
@@ -384,15 +393,16 @@ frames_spatial <- function(
         map_type = map_type,
         r_type = r_type,
         fade_raster = fade_raster,
-        n_r = n_r
+        n_r = n_r,
+        legend_colours = legend_colours,
+        legend_labels = legend_labels
       ),
       maxpixels = if(!is.null(extras$maxpixels)) extras$maxpixels else 500000,
       alpha = if(!is.null(extras$alpha)) extras$alpha else 1,
       maxColorValue = if(!is.null(extras$maxColorValue)) extras$maxColorValue else NA,
       interpolate = if(!is.null(extras$interpolate)) extras$interpolate else FALSE
     ),
-    additions = NULL,
-    palette = pal
+    additions = NULL
   )
   attr(frames, "class") <- c("moveVis", "frames_spatial")
   
