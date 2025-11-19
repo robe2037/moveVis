@@ -128,17 +128,50 @@ align_move <- function(m, res = "minimum", start_end_time = NULL, fill_na_values
   
   # calculate target times for aligning, calculate normalized distance
   times_target <- seq.POSIXt(start_end_time[1], start_end_time[2], by = set_units(res, "s"))
+  
+  # Informative error here to avoid error in which.minpos()
+  if (length(times_target) == 1) {
+    out(
+      paste0(
+        "The chosen temporal resolution of ",
+        round(as.numeric(res), digits = 2), " [", units(res), "] ",
+        "exceeds the temporal range used for alignment. ",
+        "Please choose a finer resolution."
+      ),
+      type = 3
+    )
+  }
+  
   times_target <- lapply(m_tracks, function(x){
     ts <- mt_time(x)
     times_target[which.minpos(times_target - min(ts)):which.minpos(max(ts) - times_target)]
   })
   
+  lens <- sapply(times_target, length)
+  
   # check whether resolution fits data
-  if(any(sapply(times_target, length) == 2)){
-    out(paste0("Trajectory alignment using the chosen temporal resolution of ",  round(as.numeric(res), digits = 2), " [", units(res), "] results in only two positions for at least one track in 'm'. You may want to choose a finer resolution."), type = 2)
+  if (any(lens < 2)) {
+    out(
+      paste0(
+        "The chosen temporal resolution of ",  
+        round(as.numeric(res), digits = 2), " [", units(res), "] ", 
+        "is too coarse for some tracks: \"",
+        paste0(names(times_target)[which(lens < 2)], collapse = "\", \""), "\""
+      ), 
+      type = 3
+    )
   }
-  if(any(sapply(times_target, length) < 2)){
-    out(paste0("The chosen temporal resolution of ",  round(as.numeric(res), digits = 2), " [", units(res), "] is to coarse for the provided data. You may want to choose a finer resolution."), type = 3)
+  
+  if (any(lens == 2)) {
+    out(
+      paste0(
+        "Trajectory alignment using the chosen temporal resolution of ", 
+        round(as.numeric(res), digits = 2), " [", units(res), 
+        "] results in only two positions for at least one track in 'm'. ",
+        "You may want to choose a finer resolution."
+      ), 
+      type = 2
+    )
   }
   
   # interpolate points on linestring by normalized distance (future: make use of ctmm?)
