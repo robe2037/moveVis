@@ -529,7 +529,7 @@ repl_vals <- function(data, x, y){
 #' @importFrom ggnewscale new_scale_colour
 #' @importFrom rlang .data
 #' @noRd
-gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, path_mitre, path_arrow, path_alpha, path_legend, path_legend_title, path_size, equidistant, tail_length, palette){
+gg.spatial <- function(x, y, m_names, m_colour, path_end, path_join, path_mitre, path_arrow, path_alpha, path_legend, path_legend_title, path_size, equidistant, tail_length, legend_colours, legend_labels){
   
   # lines: sements
   x_lines <- do.call(rbind, lapply(unique(m_names), function(.name){
@@ -548,10 +548,6 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
     } else NULL
   }))
   
-  if (is.null(m_labels)) {
-    m_labels <- m_names
-  }
-  
   # scale plot to ext and set na.rm to TRUE to avoid warnings
   y$layers[[1]]$geom_params$na.rm <- T
   
@@ -568,17 +564,14 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   
   # add legend?
   if(isTRUE(path_legend)){
-    scale_type <- .scale_type(m_labels)
+    scale_type <- .scale_type(legend_labels)
     
     if (scale_type == "qualitative") {
-      colour_map <- unique(data.frame(name = m_names, colour = m_colour, label = m_labels))
-      
-      x_lines_legend <- do.call(rbind, lapply(colour_map$label, function(.name){
+      x_lines_legend <- do.call(rbind, lapply(seq_along(legend_labels), function(.name){
         coords <- st_coordinates(x)
         st_sf(geometry = st_sfc(st_linestring(coords), crs = st_crs(x)))  
       }))
-      x_lines_legend$name <- colour_map$name
-      x_lines_legend$label <- colour_map$label
+      x_lines_legend$label <- legend_labels
 
       p <- quiet(
         p + 
@@ -586,7 +579,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
           geom_sf(data = x_lines_legend, aes(colour = .data$label, linetype = NA), linewidth = path_size, na.rm = TRUE) +
           scale_linetype(guide = "none") +
           scale_colour_manual(
-            values = palette(length(unique(m_labels))),
+            values = legend_colours,
             name = path_legend_title 
           ) +
           guides(color = guide_legend(order = 1))
@@ -603,7 +596,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
             aes(x = x, y = y, colour = .data$label)
           ) +
           scale_linetype(guide = "none") +
-          ggplot2::scale_colour_gradientn(colours = palette(256), limits = range(as.numeric(m_labels)), name = path_legend_title) +
+          ggplot2::scale_colour_gradientn(colours = legend_colours, limits = range(as.numeric(legend_labels)), name = path_legend_title) +
           guides(color = ggplot2::guide_colourbar(order = 1))
       )
     }
@@ -619,7 +612,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
 #' @importFrom ggplot2 ggplot geom_path aes theme scale_fill_identity scale_y_continuous scale_x_continuous scale_colour_manual theme_bw coord_cartesian geom_bar
 #' @importFrom rlang .data
 #' @noRd
-.gg_flow <- function(x, y, path_legend, path_legend_title, path_size, val_seq, palette){
+.gg_flow <- function(x, y, path_legend, path_legend_title, path_size, val_seq, legend_colours, legend_labels){
   
   ## generate base plot
   p <- ggplot(x, aes(x = .data$frame, y = .data$value)) + geom_path(aes(group = .data$name), linewidth = path_size, show.legend = F, colour = x$colour) + 
@@ -634,17 +627,17 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   if(isTRUE(path_legend)){
     colour_pos <- sapply(as.character(unique(y$colour_labels)), function(x) match(x, y$colour_labels)[1])
     
-    l.df <- cbind.data.frame(frame = x[1,]$frame, value = x[1,]$value, name = names(colour_pos),
-                             colour = as.character(y$colour[colour_pos]), stringsAsFactors = F)
+    l.df <- cbind.data.frame(frame = x[1,]$frame, value = x[1,]$value, name = legend_labels,
+                             colour = legend_colours, stringsAsFactors = F)
     
     # Ensure legend mapping is in factor order if input data are factor
-    if (is.factor(y$colour_labels)) {
-      l.df$name <- factor(l.df$name, levels = levels(y$colour_labels))
+    if (is.factor(legend_labels)) {
+      l.df$name <- factor(l.df$name, levels = levels(legend_labels))
     }
     
     l.df <- rbind(l.df, l.df)
     p <- p + geom_path(data = l.df, aes(x = .data$frame, y = .data$value, colour = .data$name), linewidth = path_size, na.rm = TRUE) + 
-      scale_colour_manual(values = palette(length(unique(l.df$colour))), name = path_legend_title) #linetype = NA)
+      scale_colour_manual(values = legend_colours, name = path_legend_title) #linetype = NA)
   }
   return(p)
   
@@ -657,7 +650,7 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
 #'
 #' @noRd
 ## stats plot function
-.gg_hist <- function(x, y, path_legend, path_legend_title, path_size, val_seq, r_type, palette){
+.gg_hist <- function(x, y, path_legend, path_legend_title, path_size, val_seq, r_type, legend_colours, legend_labels){
   
   ## generate base plot
   if(r_type == "gradient") p <- ggplot(x, aes(x = .data$value, y = .data$count)) + geom_path(aes(group = "name"), linewidth = path_size, show.legend = F, colour = x$colour)
@@ -674,17 +667,17 @@ gg.spatial <- function(x, y, m_names, m_colour, m_labels, path_end, path_join, p
   if(isTRUE(path_legend)){
     colour_pos <- sapply(as.character(unique(y$colour_labels)), function(x) match(x, y$colour_labels)[1])
     
-    l.df <- cbind.data.frame(value = x[1,]$value, count = x[1,]$count, name = names(colour_pos),
-                             colour = as.character(y$colour[colour_pos]), stringsAsFactors = F)
+    l.df <- cbind.data.frame(value = x[1,]$value, count = x[1,]$count, name = legend_labels,
+                             colour = legend_colours, stringsAsFactors = F)
     
     # Ensure legend mapping is in factor order if input data are factor
-    if (is.factor(y$colour_labels)) {
-      l.df$name <- factor(l.df$name, levels = levels(y$colour_labels))
+    if (is.factor(legend_labels)) {
+      l.df$name <- factor(l.df$name, levels = levels(legend_labels))
     }
     
     l.df <- rbind(l.df, l.df)
     p <- p + geom_path(data = l.df, aes(x = .data$value, y = .data$count, colour = .data$name), linewidth = path_size, na.rm = TRUE) + 
-      scale_colour_manual(values = palette(length(unique(l.df$colour))), name = path_legend_title) #linetype = NA
+      scale_colour_manual(values = legend_colours, name = path_legend_title) #linetype = NA
   }
   return(p)
 }

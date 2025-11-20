@@ -147,7 +147,14 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
   scale <- .build_scale(m[[colour_paths_by]], pal)
   
   m$colour <- scale(m[[colour_paths_by]])
-  m$colour_labels <- m[[colour_paths_by]]
+
+  if (.scale_type(m[[colour_paths_by]]) == "qualitative") {
+    legend_labels <- unique(m[[colour_paths_by]])
+    legend_colours <- pal(length(legend_labels))
+  } else {
+    legend_labels <- NULL
+    legend_colours <- pal(256)
+  }
   
   ## create data.frame from m with frame time and colour
   m <- .add_m_attributes(m)
@@ -183,17 +190,13 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
     hist_data <- NULL
     if(graph_type == "hist"){
       
-      if (is.null(m[["colour_labels"]])) {
-        m$colour_labels <- m$name
-      }
-      
       dummy <- do.call(rbind, lapply(as.character(unique(m[[colour_paths_by]])), function(name){
         cbind.data.frame(count = 0, value = val_seq, name = name,
-                         colour = unique(m[m[["colour_labels"]] == name,]$colour))
+                         colour = unique(legend_colours[legend_labels == name]))
       }))
       
-      if (is.factor(m$colour_labels)) {
-        dummy$name <- factor(dummy$name, levels = levels(m$colour_labels))
+      if (is.factor(legend_labels)) {
+        dummy$name <- factor(dummy$name, levels = levels(legend_labels))
       }
       
       ## Calculating time-cumulative value histogram per individual and timestep
@@ -201,8 +204,8 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
       hist_data <- lapply(1:max(m$frame), function(i, d = dummy){
         x <- m[unlist(lapply(1:i, function(x) which(m$frame == x))),]
         
-        x <- do.call(rbind, lapply(unique(x$colour_labels), function(name){
-          y <- x[x$colour_labels == name,]
+        x <- do.call(rbind, lapply(unique(x[[colour_paths_by]]), function(name){
+          y <- x[x[[colour_paths_by]] == name,]
           z <- table(round(y$value, digits = val_digits))
           
           d.name <- d[d$name == name,]
@@ -231,9 +234,11 @@ frames_graph <- function(m, r, r_type = "gradient", fade_raster = FALSE, crop_ra
       path_legend = path_legend,
       path_legend_title = path_legend_title,
       val_seq = val_seq,
-      r_type = r_type),
-    additions = NULL,
-    palette = pal
+      r_type = r_type,
+      legend_labels = legend_labels,
+      legend_colours = legend_colours
+    ),
+    additions = NULL
   )
   attr(frames, "class") <- c("moveVis", "frames_graph")
   

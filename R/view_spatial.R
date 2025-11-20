@@ -55,11 +55,7 @@ view_spatial <- function(m, render_as = "mapview", time_labels = TRUE, stroke = 
   m <- .expand_track_attr(m, var = colour_paths_by)
   
   pal <- .build_pal(m[[colour_paths_by]], path_colours)
-  scale <- .build_scale(m[[colour_paths_by]], pal)
-  
-  m$colour <- scale(m[[colour_paths_by]])
-  m$colour_labels <- m[[colour_paths_by]]
-  
+
   ## preprocess movement data
   m <- .add_m_attributes(m)
   
