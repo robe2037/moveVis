@@ -37,20 +37,24 @@ test_that("informative errors on bad temporal resolution inputs", {
   expect_error(expect_warning(align_move(m, res = 1, unit = "days", verbose = F)))
   
   expect_error(
-    align_move(m, res = units::set_units(20, "hours"), verbose = FALSE),
-    "exceeds the temporal range used for alignment"
+    suppressWarnings(
+      align_move(m, res = units::set_units(20, "hours"), verbose = FALSE)
+    ),
+    "is too coarse for the input data"
   )
   expect_error(
-    align_move(
-      m, 
-      res = units::set_units(5, "hours"), 
-      start_end_time = c(
-        as.POSIXct("2018-05-15 08:00:00", "UTC"), 
-        as.POSIXct("2018-05-15 12:00:00", "UTC")
-      ),
-      verbose = FALSE
+    suppressWarnings(
+      align_move(
+        m, 
+        res = units::set_units(5, "hours"), 
+        start_end_time = c(
+          as.POSIXct("2018-05-15 08:00:00", "UTC"), 
+          as.POSIXct("2018-05-15 12:00:00", "UTC")
+        ),
+        verbose = FALSE
+      )
     ),
-    "exceeds the temporal range used for alignment"
+    "is too coarse for the input data"
   )
   expect_error(
     align_move(m, res = units::set_units(8, "hours"), verbose = FALSE),

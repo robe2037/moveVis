@@ -130,22 +130,24 @@ align_move <- function(m, res = "minimum", start_end_time = NULL, fill_na_values
   times_target <- seq.POSIXt(start_end_time[1], start_end_time[2], by = set_units(res, "s"))
   
   # Informative error here to avoid error in which.minpos()
-  if (length(times_target) == 1) {
-    out(
-      paste0(
-        "The chosen temporal resolution of ",
-        round(as.numeric(res), digits = 2), " [", units(res), "] ",
-        "exceeds the temporal range used for alignment. ",
-        "Please choose a finer resolution."
-      ),
-      type = 3
-    )
-  }
+  tryCatch(
+    times_target <- lapply(m_tracks, function(x){
+      ts <- mt_time(x)
+      times_target[which.minpos(times_target - min(ts)):which.minpos(max(ts) - times_target)]
+    }),
+    error = function(cnd) {
+      out(
+        paste0(
+          "The chosen temporal resolution of ",
+          round(as.numeric(res), digits = 2), " [", units(res), "] ",
+          "is too coarse for the input data. ",
+          "Please choose a finer resolution."
+        ),
+        type = 3
+      )
+    }
+  )
   
-  times_target <- lapply(m_tracks, function(x){
-    ts <- mt_time(x)
-    times_target[which.minpos(times_target - min(ts)):which.minpos(max(ts) - times_target)]
-  })
   
   lens <- sapply(times_target, length)
   
