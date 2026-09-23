@@ -425,3 +425,56 @@ test_that("Legend title uses attribute variable", {
   # more effective.
   expect_equal(grobs[[i]]$children[[1]]$label, "var")
 })
+
+test_that("frames_spatial (cross_dateline) covers the full shifted extent", {
+  fr <- frames_spatial(
+    m.dateline,
+    crs = sf::st_crs(4326), 
+    cross_dateline = TRUE,
+    margin_factor = 1.3,
+    equidistant = FALSE,
+    verbose = FALSE
+  )
+
+  gg.ext <- fr$aesthetics$gg.ext
+  expect_gt(gg.ext[["xmax"]], 180)
+
+  # basemap must span the shifted extent, not collapse to a world raster
+  r.ext <- as.vector(terra::ext(fr$r[1]))
+  expect_gt(r.ext[2], 180)
+  expect_lt(r.ext[2] - r.ext[1], 10)
+})
+
+test_that("frames_spatial (cross_dateline) supports an equidistant extent", {
+  fr <- expect_no_warning(
+    frames_spatial(
+      m.dateline,
+      crs = sf::st_crs(4326),
+      cross_dateline = TRUE,
+      equidistant = TRUE,
+      verbose = FALSE
+    ),
+    message = "equidistant"
+  )
+
+  expect_true(fr$aesthetics$equidistant)
+  expect_gt(fr$aesthetics$gg.ext[["xmax"]], 180)
+})
+
+test_that("frames_spatial (cross_dateline) labels longitudes beyond the dateline", {
+  fr <- frames_spatial(
+    m.dateline,
+    crs = sf::st_crs(4326),
+    cross_dateline = TRUE,
+    margin_factor = 1.3,
+    equidistant = FALSE,
+    verbose = FALSE
+  )
+
+  grat <- ggplot2::ggplot_build(fr[[length(fr)]])$layout$panel_params[[1]]$graticule
+  lon <- grat[grat$type == "E", ]
+
+  expect_gt(max(lon$degree), 180)
+  # shifted longitudes must read as degrees west, not as values above 180
+  expect_true(any(grepl("W", as.character(lon$degree_label))))
+})
